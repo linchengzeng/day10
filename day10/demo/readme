@@ -1,0 +1,95 @@
+进程线程
+讲进程之前，讲下paramiko模块
+pramiko是python自己用于SSH客户端，用于连接远程服务器并执行基本命令
+
+
+# -*- coding:utf-8 -*-
+#  Author:aling
+import pramiko
+# 创建SSH对象
+ssh = paramiko.SSHClient()
+# 允许不在know_hosts文件中的主机
+#ssh.set_missing_host_key_policy(paramiko.AutoAddrPolicy())
+# 连接服务器
+ssh.conn(hostname = 'c1.salt.com',port=22,username = 'aling',password='aling666')
+
+#执行命令
+stdin,stdout,stderr = ssh.exec_command('df')#df是一条命令,stdin标准输入，stdout标准输出,stderr标准错误
+#获取命令结果
+result = stdout.read()
+#关闭连接
+ssh.close()
+
+
+这只是连接一台机器进行命令的传输，可是如果要多台机器执行多条同样的命令，或需要传输文件呢。
+------------------------
+
+sftp是通过scp实现传输文件
+
+# -*- coding:utf-8 -*-
+#  Author:aling
+import paramiko
+transport = paramiko.Transport(('hostname',22))
+transport.connect(username='aling',password='aling666')#建议连接
+sftp = paramiko.SFTPClient.from_transport(transport)#定义怎么传
+sftp.put('/tmp/abc.txt','local_path')# 上传
+sftp.get('remove_path','local_path')# 下载
+transport.close()
+
+如果自己写SSH的时候，也会有普通SSH连接的时候需要的key文件
+ssh.set_missing_host_key_policy(paramiko.AutoAddrPolicy())
+这代码的意思就是说，在本地know_hosts文件中的主机里面没有找到相关的密角对，则自动添加
+
+-------------------------------------------------------------
+这是明文写入密码，但是这种存在风险，特别是连接多服务器时，风险更大
+另一种方法是采用ssh密钥的方式（密钥对）登录，不用密码
+这个密钥就叫做RSA--非对称密钥验证
+RSA原理：
+   这个密钥分两部分：
+         公钥public key
+         私钥private key
+10.0.0.31(A) ------> 10.0.0.41(B)
+A把公钥发布出去，自己保留私钥，41获得31的公钥，41连接31时就可以实现无密码直接登录
+那41怎么获得31的公钥呢。当然是copy过去的啦，可以手动复制，
+也可以用ssh-copy-id  "root@10.10.0.31 -p52113"命令去实现
+        ssh-copy-id  "用户名@主机地址 -p端口"
+操作步骤如下
+1、A先生成密钥对  (linux命令）
+    ssh-keygen
+2、生成的私钥存在放/root/.ssh/id_ras.pub可用more /root/.ssh/id_ras.pub查看
+3、将生成的public-key  copy到目标客户端的  .ssh/authorized_keys 尾部（即追加到这个文件下面） #第一次登录的时候.ssh是不存在的
+     附linux文件权限
+  命令 chmod   777    abc.txt   查看权限
+  命令ll  修改权限
+     rwx    rwx     rwx
+     属主   属组    others
+
+那python模拟公钥登录的话，也需要实现这些操作
+
+实现代码如下：
+
+# -*- coding:utf-8 -*-
+# Author:aling
+import paramiko
+privage_key = paramiko.RSAKey.from_private_key_file('id_ras31.txt')
+ssh = paramiko.SSHClient()
+ssh.set_missing_host_key_policy(paramiko.AutoAddrPolicy())
+# 连接服务器
+ssh.conn(hostname = 'c1.salt.com',port=22,username = 'aling',pkey=privage_key)
+
+#执行命令
+stdin,stdout,stderr = ssh.exec_command('df;ifconfig')#df是一条命令,stdin标准输入，stdout标准输出,stderr标准错误
+#获取命令结果
+result = stdout.read()
+res,err = stdout.read(),stderr.read()
+result = res if res else err # 三元运算符
+print(result.decode())
+
+#关闭连接
+ssh.close()
+
+
+
+
+
+
