@@ -13,7 +13,7 @@ user_data = {
 def account_info(acc_data):
     print(user_data)
 
-def repay(acc_data):
+def repay(account_data):
     '''
 
     :param acc_data:
@@ -64,7 +64,7 @@ def pay_check(acc_data):
 def logout(acc_data):
     pass
 
-def interactive(acc_data)
+def interactive(acc_data):
     '''
 
     :param acc_data:

@@ -17,9 +17,11 @@ user_data = {
     'is_authenticated':False,
     'account_data':None
 }
-def account_info(acc_data):
+def account_info(user_data):
     print(user_data)
 def repay(acc_data):
+    print(acc_data)
+def interactive(acc_data):
     print(acc_data)
 while True:
     readable,writeable,exceptional = select.select(inputs,outputs,inputs)
@@ -35,16 +37,21 @@ while True:
         else:
             # 有数据进来
             try:
-                data = activity_sock.recv(1024)
-                print('收到用户名密码为：%s'%data)
-                acc_data = auth.acc_login(data,access_logger)
+                acc_input_data = activity_sock.recv(1024)
+                print('收到用户名密码为：%s'%acc_input_data)
+                acc_data = auth.acc_login(user_data,acc_input_data,logger)
                 if user_data['is_authenticated']:
                     user_data['account_data'] = acc_data
+                    print('验证通过')
                     interactive(user_data)
-                data_dict[activity_sock].put(data)# 返回的数据
+                    data_dict[activity_sock].put(b'auth_success')# 返回的数据
+                else:
+                    data_dict[activity_sock].put(b'auth_error')  # 返回的数据
                 outputs.append(activity_sock)
             except Exception as e:
                 print('客户端%s断开连接。。。'%activity_sock)
+                print(e)
+                outputs.append(activity_sock)
                 inputs.remove(activity_sock)
     # 发送数据
     for activity_sock in writeable:
