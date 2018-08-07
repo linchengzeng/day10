@@ -1,15 +1,20 @@
 # -*- coding:utf-8 -*-
 #  Author:aling
 
-import select
+import socket
 from selectors_ftp_server.conf import settings
 
 
+
+data_dict = {}
+
 class Interactive_Service(object):
 
-    def __init__(self,user_info):
+    def __init__(self,user_info,activity_sock):
         self.user_info = user_info
+        self.activity_sock = activity_sock
         print(user_info)
+        data_dict[activity_sock].put(settings.FTP_MAIN_MENU_INFO.encode('utf-8'))
         self.star_main(user_info)
 
     def star_main(self,user_info):

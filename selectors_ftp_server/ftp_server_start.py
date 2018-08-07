@@ -2,7 +2,7 @@
 #  Author:aling
 import socket,select,time,queue
 from selectors_ftp_server.core import logger,interactive,ftp_server_auth as auth
-from selectors_ftp_server.conf import settings
+
 sock = socket.socket()
 sock.bind(('localhost',8823))
 sock.listen(100)
@@ -41,12 +41,13 @@ while True:
                 acc_input_data = activity_sock.recv(1024)
                 print('收到用户名密码为：%s'%acc_input_data)
                 acc_data = auth.acc_login(user_data,acc_input_data,logger)
+                print("acc_data:",acc_data)
                 if user_data['is_authenticated']:
                     user_data['account_data'] = acc_data
-                    print('验证通过')
-                    # interactive.Interactive_Service(user_data)
+                    print('验证通过:',user_data)
                     data_dict[activity_sock].put(b'auth_success')# 返回的数据
-                    data_dict[activity_sock].put(settings.FTP_MAIN_MENU_INFO.encode('utf-8'))
+                    interactive.Interactive_Service(user_data,activity_sock)
+                    # data_dict[activity_sock].put(res)
                 else:
                     data_dict[activity_sock].put(b'auth_error')  # 返回的数据
                 outputs.append(activity_sock)
