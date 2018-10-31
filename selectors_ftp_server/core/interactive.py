@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 #  Author:aling
 
-import socket
+import socket,json
 from selectors_ftp_server.conf import settings
 
 
@@ -14,7 +14,7 @@ class Interactive_Service(object):
         self.user_info = user_info
         self.activity_sock = activity_sock
         print(user_info)
-        data_dict[activity_sock].put(settings.FTP_MAIN_MENU_INFO.encode('utf-8'))
+        data_dict[activity_sock].put(json.dumps(settings.FTP_MAIN_MENU_INFO).encode('utf-8'))
         self.star_main(user_info)
 
     def star_main(self,user_info):
